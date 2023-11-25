@@ -1,0 +1,4 @@
+﻿  KursovayaFinal.cpp
+C:\Users\New\source\repos\KursovayaFinal\KursovayaFinal\KursovayaFinal.cpp(248,33): warning C4018: <: несоответствие типов со знаком и без знака
+C:\Users\New\source\repos\KursovayaFinal\KursovayaFinal\KursovayaFinal.cpp(97): warning C4715: UserManager::loginUser: значение возвращается не при всех путях выполнения
+  KursovayaFinal.vcxproj -> C:\Users\New\source\repos\KursovayaFinal\Debug\KursovayaFinal.exe
