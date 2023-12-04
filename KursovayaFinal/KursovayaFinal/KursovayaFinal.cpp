@@ -9,7 +9,7 @@
 #include <Windows.h>
 #include <chrono>
 #include <conio.h>
-
+#include <functional>
 using namespace std;
 
 string censorPassword() {
@@ -34,6 +34,7 @@ string censorPassword() {
 bool confirmChanges() {
     string choice;
     cout << "Вы действительно хотите внести изменения? (Д/Н)?" << endl;
+    cout << ">>> ";
     cin >> choice;
     if (choice == "Д" || choice == "д") {
         return true;
@@ -44,6 +45,12 @@ bool confirmChanges() {
     else {
         return false;
     }
+}
+string getUserInput() {
+    string input;
+    cout << ">>> ";
+    cin >> input;
+    return input;
 }
 
 class User {
@@ -74,7 +81,7 @@ class UserManager {
 public:
     void registerUser(const string& username, const string& password, const string& role) {
         users.push_back(User(username, password, role));
-        std::cout << "Пользователь зарегистрирован." << std::endl;
+         cout << "Пользователь зарегистрирован." <<  endl;
     }
 
     int loginUser(const string& username, const string& password, const string& role) {
@@ -97,15 +104,15 @@ public:
     }
 
     void saveUsersToFile() {
-        std::ofstream file("users.txt");
+         ofstream file("users.txt");
         if (file.is_open()) {
             for (const User& user : users) {
-                file << user.getUsername() << " " << user.getPassword() << " " << user.getRole() << std::endl;
+                file << user.getUsername() << " " << user.getPassword() << " " << user.getRole() <<  endl;
             }
             file.close();
         }
         else {
-            std::cerr << "Не удается открыть файл для записи." << std::endl;
+             cerr << "Не удается открыть файл для записи." <<  endl;
         }
     }
 
@@ -127,7 +134,7 @@ public:
     void viewAllUsers() {
         for (const User& user : users) {
             user.printUserInfo();
-            std::cout << "-------------------" << std::endl;
+             cout << "-------------------" <<  endl;
         }
     }
 
@@ -177,22 +184,33 @@ public:
 
 
     void Display() const {
-        cout << setw(20) << date << setw(20) << numberOfWorkbench << setw(25) << nameOfProduct << setw(25) << numberOfUnits << setw(25) << responsible << endl;
+        int sizeOfTabWorkbench = 20 - to_string(numberOfWorkbench).size();
+        int sizeOfTabProduct = 25 - nameOfProduct.size();
+        int sizeOfTabUnits = 20 - to_string(numberOfUnits).size();
+        int sizeOfTabResponsible = 14 - responsible.size();
+        cout <<  left;
+        cout <<  setw(10)<< "| " << date
+                  <<setw(sizeOfTabWorkbench) << "| " << numberOfWorkbench
+                  <<setw(sizeOfTabProduct) << "| " << nameOfProduct
+                  <<setw(sizeOfTabUnits) << "| " << numberOfUnits
+                  <<setw(sizeOfTabResponsible) << "| " << responsible
+                  << " |" <<  endl;
+        cout << setfill('-') << setw(101) << "" << setfill(' ') << endl;
     }
 
     static void Save(const vector<Production>& productions) {
-        std::ofstream file("production.txt");
+         ofstream file("production.txt");
         if (file.is_open()) {
             for (const Production& production : productions) {
-                file << production.date << ";" << production.numberOfWorkbench << ";" << production.nameOfProduct << ";" << production.numberOfUnits << ";" << production.responsible << std::endl;
+                file << production.date << ";" << production.numberOfWorkbench << ";" << production.nameOfProduct << ";" << production.numberOfUnits << ";" << production.responsible <<  endl;
             }
             file.close();
         }
         else {
-            std::cerr << "Не удается открыть файл для записи." << std::endl;
+             cerr << "Не удается открыть файл для записи." <<  endl;
         }
     }
-    friend std::istream& operator>>(std::istream& in, Production& production) {
+    friend istream& operator>>( istream& in, Production& production) {
         in >> production.date >> production.numberOfWorkbench >> production.nameOfProduct >> production.numberOfUnits >> production.responsible;
         return in;
     }
@@ -203,7 +221,14 @@ private:
     vector<Production> productions;
 
     void PrintHeader() const {
-        cout << setw(20) << "Дата" << setw(20) << "Номер цеха" << setw(25) << "Название изделия" << setw(25) << "Количество ед." << setw(25) << "Ответственный" << endl;
+        cout <<  left;
+        cout <<  setw(20) << "| Дата"
+            <<  setw(20) << "| Номер цеха"
+            <<  setw(25) << "| Название продукта"
+            <<  setw(20) << "| Количество"
+            <<  setw(20) << "| Ответсвенный |" <<  endl;
+
+         cout <<  setfill('-') <<  setw(101) << "" <<  setfill(' ') <<  endl;
     }
 
 public:
@@ -272,13 +297,13 @@ public:
         }
     }
 
-    void FilterAndSortByDate(int numberOfWorkbench, bool descending, const std::string& startDate, const std::string& endDate) {
-        std::vector<Production> filteredProduction;
-        auto startIt = std::find_if(productions.begin(), productions.end(), [&startDate](const Production& p) {
+    void FilterAndSortByDate(int numberOfWorkbench, bool descending, const  string& startDate, const  string& endDate) {
+         vector<Production> filteredProduction;
+        auto startIt =  find_if(productions.begin(), productions.end(), [&startDate](const Production& p) {
             return p.date >= startDate;
             });
 
-        auto endIt = std::find_if(productions.begin(), productions.end(), [&endDate](const Production& p) {
+        auto endIt =  find_if(productions.begin(), productions.end(), [&endDate](const Production& p) {
             return p.date > endDate;
             });
 
@@ -289,7 +314,7 @@ public:
         }
 
         if (filteredProduction.empty()) {
-            std::cout << "Нет информации по данному цеху/промежутку времени" << std::endl;
+             cout << "Нет информации по данному цеху/промежутку времени" <<  endl;
             return;
         }
 
@@ -298,7 +323,7 @@ public:
         for (const auto& s : filteredProduction) {
             s.Display();
         }
-        std::cout << std::endl;
+         cout <<  endl;
     }
 
     void SaveToFile() const {
@@ -309,42 +334,42 @@ public:
 
 class DataFile {
 public:
-    std::string filename;
+     string filename;
 
-    DataFile(const std::string& filename)
+    DataFile(const  string& filename)
         : filename(filename) {}
 
     // Создать файл
-    static void CreateFile(const std::string& filename) {
-        std::ofstream file(filename);
+    static void CreateFile(const  string& filename) {
+         ofstream file(filename);
         if (file.is_open()) {
             file.close();
-            std::cout << "Файл создан: " << filename << std::endl;
+             cout << "Файл создан: " << filename <<  endl;
         }
         else {
-            std::cerr << "Невозможно создать файл: " << filename << std::endl;
+             cerr << "Невозможно создать файл: " << filename <<  endl;
         }
     }
 
     // Открыть файл
-    static std::ifstream OpenFile(const std::string& filename) {
-        std::ifstream file(filename);
+    static  ifstream OpenFile(const  string& filename) {
+         ifstream file(filename);
         if (file.is_open()) {
-            std::cout << "Файл открыт: " << filename << std::endl;
+             cout << "Файл открыт: " << filename <<  endl;
         }
         else {
-            std::cerr << "Невозможно открыть файл: " << filename << std::endl;
+             cerr << "Невозможно открыть файл: " << filename <<  endl;
         }
         return file;
     }
 
     // Удалить файл
-    static void DeleteFile(const std::string& filename) {
+    static void DeleteFile(const  string& filename) {
         if (remove(filename.c_str()) == 0) {
-            std::cout << "Файл удален: " << filename << std::endl;
+             cout << "Файл удален: " << filename <<  endl;
         }
         else {
-            std::cerr << "Невозможно удалить файл: " << filename << std::endl;
+             cerr << "Невозможно удалить файл: " << filename <<  endl;
         }
     }
 };
@@ -361,24 +386,25 @@ public:
         while (!exitMenu) {
             displayMainMenu();
             int choice;
-            cin >> choice;
-
+            choice = stoi(getUserInput());
             switch (choice) {
             case 1:
                 system("cls");
                 cout << "Введите имя пользователя: ";
                 cin >> username;
                 cout << "Введите пароль: ";
-                cin >> password;
+                password = censorPassword();
                 userManager.registerUser(username, password, role);
                 userManager.saveUsersToFile();
                 break;
             case 2:
                 system("cls");
+                cout << setfill('-') << setw(30) << "" << setfill(' ') << endl;
                 cout << "Введите имя пользователя: ";
                 cin >> loginUsername;
                 cout << "Введите пароль: ";
                 loginPassword = censorPassword();
+                cout << setfill('-') << setw(30) << "" << setfill(' ') << endl;
                 if (userManager.loginUser(loginUsername, loginPassword, role) == 0)
                     UserDataProduction();
                 else if (userManager.loginUser(loginUsername, loginPassword, role) == 1) {
@@ -395,7 +421,7 @@ public:
                 break;
             default:
                 system("cls");
-                cout << "Некорректный выбор. Попробуйте еще раз." << std::endl;
+                cout << "Некорректный выбор. Попробуйте еще раз." <<  endl;
                 break;
             }
         }
@@ -403,10 +429,12 @@ public:
 
 private:
     void displayMainMenu() {
+        cout << setfill('-') << setw(18) << "" << setfill(' ') << endl;
         cout << "Выберите действие: " << endl;
         cout << "1. Регистрация" << endl;
         cout << "2. Вход в аккаунт" << endl;
         cout << "3. Выход" << endl;
+        cout << setfill('-') << setw(18) << "" << setfill(' ') << endl;
 
 
     }
@@ -417,7 +445,7 @@ private:
         while (!exitAdminMenu) {
             displayAdminMenu();
             int choice;
-            cin >> choice;
+            choice = stoi(getUserInput());
 
             switch (choice) {
             case 1:
@@ -444,11 +472,13 @@ private:
         }
     }
     void displayAdminMenu() {
+        cout << setfill('-') << setw(45) << "" << setfill(' ') << endl;
         cout << "Выберите действие" << endl;
         cout << "1. Управление учетными записями пользователей" << endl;
         cout << "2. Работа с файлом данных" << endl;
         cout << "3. Работа с данными" << endl;
         cout << "4. Выход" << endl;
+        cout << setfill('-') << setw(45) << "" << setfill(' ') << endl;
     }
 
 
@@ -460,7 +490,7 @@ private:
         while (!exitDataFileMenu)
         {
             displayDataFileMenu();
-            cin >> choice;
+            choice = stoi(getUserInput());
 
 
             switch (choice) {
@@ -468,29 +498,39 @@ private:
                 c = confirmChanges();
                 if (c == true) {
                     system("cls");
+                    cout << setfill('-') << setw(25) << "" << setfill(' ') << endl;
                     cout << "Введите название файла: ";
                     cin >> filename;
                     DataFile::CreateFile(filename);
+                    cout << setfill('-') << setw(25) << "" << setfill(' ') << endl;
                 }
-                else
+                else{
                     cout << "Откат изменений" << endl;
+                    cout << setfill('-') << setw(25) << "" << setfill(' ') << endl;
+                }
                 break;
             case 2:
                 system("cls");
+                cout << setfill('-') << setw(25) << "" << setfill(' ') << endl;
                 cout << "Введите название файла: ";
                 cin >> filename;
                 DataFile::OpenFile(filename);
+                cout << setfill('-') << setw(25) << "" << setfill(' ') << endl;
                 break;
             case 3:
                 c = confirmChanges();
                 if (c == true) {
                     system("cls");
+                    cout << setfill('-') << setw(25) << "" << setfill(' ') << endl;
                     cout << "Введите название файла: ";
                     cin >> filename;
                     DataFile::DeleteFile(filename);
+                    cout << setfill('-') << setw(25) << "" << setfill(' ') << endl;
                 }
-                else
+                else{
                     cout << "Откат изменений" << endl;
+                    cout << setfill('-') << setw(25) << "" << setfill(' ') << endl;
+                }
                 break;
             case 4:
                 system("cls");
@@ -504,18 +544,18 @@ private:
         }
     }
     void displayDataFileMenu() {
+        cout << setfill('-') << setw(18) << "" << setfill(' ') << endl;
         cout << "Выберите действие:" << endl;
         cout << "1. Создать файл" << endl;
         cout << "2. Открыть файл" << endl;
         cout << "3. Удалить файл" << endl;
         cout << "4. Вернуться назад" << endl;
+        cout << setfill('-') << setw(18) << "" << setfill(' ') << endl;
     }
 
 
     void UserData()
     {
-
-
         UserManager userManager;
         userManager.loadUsersFromFile();
         string username, password, role;
@@ -527,7 +567,7 @@ private:
             bool c;
             displayUserData();
             int choice;
-            cin >> choice;
+            choice = stoi(getUserInput());
 
 
             switch (choice) {
@@ -540,9 +580,9 @@ private:
                 if (c == true) {
                     system("cls");
                     cout << "Введите нового пользователя,пароль,роль" << endl;
-                    cin >> username;
-                    cin >> password;
-                    cin >> role;
+                    username = getUserInput();
+                    password = getUserInput();
+                    role = getUserInput();
 
                     userManager.addUser(username, password, role);
                     userManager.saveUsersToFile();
@@ -554,16 +594,22 @@ private:
                 c = confirmChanges();
                 if (c == true) {
                     system("cls");
-                    cout << "Введите  пользователя,пароль,роль" << endl;
-                    cin >> username;
-                    cin >> password;
-                    cin >> role;
+                    cout << setfill('-') << setw(33) << "" << setfill(' ') << endl;
+                    cout << "Введите имя пользователя: " << endl;
+                    username = getUserInput();
+                    cout << "Введите пароль:";
+                    password = getUserInput();
+                    role = getUserInput();
                     if (userManager.editUser(username, password, role))
                     {
                         cout << "Пользователь изменен" << endl;
+                        cout << setfill('-') << setw(33) << "" << setfill(' ') << endl;
                         userManager.saveUsersToFile();
                     }
-                    else cout << "Пользователь не найден" << endl;
+                    else{
+                        cout << "Пользователь не найден" << endl;
+                        cout << setfill('-') << setw(33) << "" << setfill(' ') << endl;
+                    }
                 }
                 else
                     cout << "Откат изменений" << endl;
@@ -572,17 +618,24 @@ private:
                 c = confirmChanges();
                 if (c == true) {
                     system("cls");
+                    cout << setfill('-') << setw(34) << "" << setfill(' ') << endl;
                     cout << "Введите пользователя для удаления" << endl;
                     cin >> username;
                     if (userManager.deleteUser(username))
                     {
                         userManager.saveUsersToFile();
                         cout << "Пользователь удален" << endl;
+                        cout << setfill('-') << setw(33) << "" << setfill(' ') << endl;
                     }
-                    else cout << "Пользователь не найден" << endl;
+                    else{
+                        cout << "Пользователь не найден" << endl;
+                        cout << setfill('-') << setw(33) << "" << setfill(' ') << endl;
+                    }
                 }
-                else
+                else{
                     cout << "Откат изменений" << endl;
+                    cout << setfill('-') << setw(33) << "" << setfill(' ') << endl;
+                }
                 break;
             case 5:
                 system("cls");
@@ -596,12 +649,14 @@ private:
         }
     }
     void displayUserData() {
+        cout << setfill('-') << setw(33) << "" << setfill(' ') << endl;
         cout << "Выберите действие:" << endl;
         cout << "1. Просмотреть все учетные записи" << endl;
         cout << "2. Добавить учетную запись" << endl;
         cout << "3. Отредактировать учетную запись" << endl;
         cout << "4. Удалить учетную запись" << endl;
         cout << "5. Вернуться назад" << endl;
+        cout << setfill('-') << setw(33) << "" << setfill(' ') << endl;
     }
 
 
@@ -621,7 +676,7 @@ private:
         while (!exitProductionMenu) {
             displayProductionMenu();
             int choice;
-            cin >> choice;
+            choice = stoi(getUserInput());
 
 
             switch (choice) {
@@ -633,24 +688,18 @@ private:
                 c = confirmChanges();
                 if (c == true) {
                     system("cls");
+                    cout << setfill('-') << setw(29) << "" << setfill(' ') << endl;
                     cout << "Введите дату: " << endl;
-                    cin.ignore();
-                    getline(cin, date);
-
+                    date = getUserInput();
                     cout << "Введите номер цеха: " << endl;
-                    cin >> numberOfWorkbench;
-
+                    numberOfWorkbench = stoi(getUserInput());
                     cout << "Введите название изделия: " << endl;
-                    cin.ignore();
-                    getline(cin, nameOfProduct);
-
+                    nameOfProduct = getUserInput();
                     cout << "Введите кол-во изделий: " << endl;
-                    cin >> numberOfUnits;
-
+                    numberOfUnits = stoi(getUserInput());
                     cout << "Введите ФИО ответственного: " << endl;
-                    cin.ignore();
-                    getline(cin, responsible);
-
+                    responsible = getUserInput();
+                    cout << setfill('-') << setw(29) << "" << setfill(' ') << endl;
                     production = Production(date, numberOfWorkbench, nameOfProduct, numberOfUnits, responsible);
                     Productiondatabase.AddProduction(production);
                     Productiondatabase.SaveToFile();
@@ -662,9 +711,11 @@ private:
                 c = confirmChanges();
                 if (c == true) {
                     system("cls");
+                    cout << setfill('-') << setw(27) << "" << setfill(' ') << endl;
                     cout << "Введите номер для удаления" << endl;
-                    cin >> i;
+                    i = stoi(getUserInput());
                     Productiondatabase.DeleteProduction(i);
+                    cout << setfill('-') << setw(27) << "" << setfill(' ') << endl;
                 }
                 else
                     cout << "Откат изменений" << endl;
@@ -673,19 +724,21 @@ private:
                 c = confirmChanges();
                 if (c == true) {
                     system("cls");
+                    cout << setfill('-') << setw(29) << "" << setfill(' ') << endl;
                     cout << "Введите номер для изменения" << endl;
-                    cin >> i;
+                    i = stoi(getUserInput());
                     Productiondatabase.DeleteProduction(i);
                     cout << "Введите дату: " << endl;
-                    getline(cin, date);
+                    date = getUserInput();
                     cout << "Введите номер цеха: " << endl;
-                    cin >> numberOfWorkbench;
-                    cout << "Введите название продукта: " << endl;
-                    getline(cin, nameOfProduct);
-                    cout << "Введите количество изделий: " << endl;
-                    cin >> numberOfUnits;
-                    cout << "Введите ФИО ответственого: " << endl;
-                    getline(cin, responsible);
+                    numberOfWorkbench = stoi(getUserInput());
+                    cout << "Введите название изделия: " << endl;
+                    nameOfProduct = getUserInput();
+                    cout << "Введите кол-во изделий: " << endl;
+                    numberOfUnits = stoi(getUserInput());
+                    cout << "Введите ФИО ответственного: " << endl;
+                    responsible = getUserInput();
+                    cout << setfill('-') << setw(29) << "" << setfill(' ') << endl;
                     production = Production(date, numberOfWorkbench, nameOfProduct, numberOfUnits, responsible);
                     Productiondatabase.AddProduction(production);
                     Productiondatabase.SaveToFile();
@@ -705,12 +758,14 @@ private:
         }
     }
     void displayProductionMenu() {
-        std::cout << "Выберите действие:" << std::endl;
-        std::cout << "1. Просмотреть все данные" << std::endl;
-        std::cout << "2. Добавить запись" << std::endl;
-        std::cout << "3. Удалить запись" << std::endl;
-        std::cout << "4. Редактировать запись" << std::endl;
-        std::cout << "5. Вернуться назад" << std::endl;
+         cout << setfill('-') << setw(25) << "" << setfill(' ') << endl;
+         cout << "Выберите действие:" <<  endl;
+         cout << "1. Просмотреть все данные" <<  endl;
+         cout << "2. Добавить запись" <<  endl;
+         cout << "3. Удалить запись" <<  endl;
+         cout << "4. Редактировать запись" <<  endl;
+         cout << "5. Вернуться назад" <<  endl;
+         cout << setfill('-') << setw(25) << "" << setfill(' ') << endl;
     }
 
 
@@ -724,7 +779,7 @@ private:
         while (!exitUserDataProduction)
         {
             displayUserDataProduction();
-            cin >> choice;
+            choice = stoi(getUserInput());
             switch (choice)
             {
             case 1:
@@ -734,14 +789,16 @@ private:
             case 2:
                 system("cls");
                 {
+                    cout << setfill('-') << setw(46) << "" << setfill(' ') << endl;
                     int numberOfWorkbench;
                     string startDate, endDate;
-                    cout << "Введите начало периода в формате ГГГГ-ММ-ДД: ";
-                    cin >> startDate;
-                    cout << "Введите конец периода в формате ГГГГ-ММ-ДД: ";
-                    cin >> endDate;
-                    cout << "Введите номер цеха";
-                    cin >> numberOfWorkbench;
+                    cout << "Введите начало периода в формате ГГГГ-ММ-ДД: " << endl;
+                    startDate = getUserInput();
+                    cout << "Введите конец периода в формате ГГГГ-ММ-ДД: " << endl;
+                    endDate = getUserInput();
+                    cout << "Введите номер цеха" << endl;
+                    numberOfWorkbench = stoi(getUserInput());
+                    cout << setfill('-') << setw(46) << "" << setfill(' ') << endl;
                     Productiondatabase.FilterAndSortByDate(numberOfWorkbench, true, startDate, endDate);
                     break;
                 }
@@ -749,14 +806,16 @@ private:
             case 3:
                 system("cls");
                 {
+                    cout << setfill('-') << setw(46) << "" << setfill(' ') << endl;
                     int numberOfWorkbench;
-                    string startDate,endDate;
-                    cout << "Введите начало периода в формате ГГГГ-ММ-ДД: ";
-                    cin >> startDate;
-                    cout << "Введите конец периода в формате ГГГГ-ММ-ДД: ";
-                    cin >> endDate;
+                    string startDate, endDate;
+                    cout << "Введите начало периода в формате ГГГГ-ММ-ДД: " << endl;
+                    startDate = getUserInput();
+                    cout << "Введите конец периода в формате ГГГГ-ММ-ДД: " << endl;
+                    endDate = getUserInput();
                     cout << "Введите номер цеха";
-                    cin >> numberOfWorkbench;
+                    numberOfWorkbench = stoi(getUserInput());
+                    cout << setfill('-') << setw(46) << "" << setfill(' ') << endl;
                     Productiondatabase.FilterAndSortByDate(numberOfWorkbench, false, startDate, endDate);
                     break;
                 }
@@ -765,6 +824,7 @@ private:
                 system("cls");
                 {
                     Productiondatabase.SaveToFile();
+                    exitUserDataProduction = true;
                     break;
                 }
                 break;
@@ -776,11 +836,13 @@ private:
         }
     }
     void displayUserDataProduction() {
+        cout << setfill('-') << setw(102) << "" << setfill(' ') << endl;
         cout << "Выберите действие:" << endl;
         cout << "1. Вывести информацию о продуктах" << endl;
         cout << "2. Вывести список товаров произведенных в одном цеху за определенный промежуток времени по убыванию" << endl;
         cout << "3. Вывести список товаров произведенных в одном цеху за определенный промежуток времени по возрастанию" << endl;
         cout << "4. Выход" << endl;
+        cout << setfill('-') << setw(102) << "" << setfill(' ') << endl;
     }
 
 };
