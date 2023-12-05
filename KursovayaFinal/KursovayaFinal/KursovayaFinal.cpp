@@ -10,8 +10,9 @@
 #include <chrono>
 #include <conio.h>
 #include <functional>
+#include <regex>
 using namespace std;
-
+//Функция для замены пароля звездами
 string censorPassword() {
     string password;
     char ch;
@@ -30,7 +31,7 @@ string censorPassword() {
     cout << endl;
     return password;
 }
-
+//Функция для подтверждения изменений
 bool confirmChanges() {
     string choice;
     cout << "Вы действительно хотите внести изменения? (Д/Н)?" << endl;
@@ -46,14 +47,19 @@ bool confirmChanges() {
         return false;
     }
 }
-
+//Функция для получения целочисленного ввода пользователя
 int getUserInput() {
     int input;
     cout <<  ">>> ";
-    cin >> input;
+    if (!(cin >> input)) {
+        // Обработка случая, когда ввод не является целым числом
+        cin.clear();  // Сброс флага ошибки
+        while (cin.get() != '\n') continue;  // Очистка буфера от некорректного ввода
+        return 0;
+    }
     return input;
 }
-
+//Функция для получения строкового ввода пользователя
 string getStringInput() {
     string input;
     cout << ">>> ";
@@ -61,39 +67,83 @@ string getStringInput() {
     getline(cin, input);
     return input;
 }
+//Функции для проверки введенной даты
+bool isLeapYear(int year) {
+    return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+}
+bool isValidDate(const string& dateStr) {
+    if (dateStr.length() != 10)
+        return false;
 
+    int year = stoi(dateStr.substr(0, 4));
+    int month = stoi(dateStr.substr(5, 2));
+    int day = stoi(dateStr.substr(8, 2));
+    if (year < 0 || year > 9999) return false;
+    if (month < 1 || month > 12) return false;
+    if (day < 1) return false;
 
+    if (month == 2) {
+        if (isLeapYear(year)) {
+            if (day > 29) return false;
+        }
+        else {
+            if (day > 28) return false;
+        }
+    }
+    else if (month == 4 || month == 6 || month == 9 || month == 11) {
+        if (day > 30) return false;
+    }
+    else {
+        if (day > 31) return false;
+    }
+
+    return true;
+}
+//Класс, представляющий пользователя
 class User {
 public:
+    // Конструктор по умолчанию
     User() : username(""), password(""), role("") {}
+    // Конструктор с параметрами для инициализации пользователя
     User(const string& username, const string& password, const string& role)
         : username(username), password(password), role(role) {}
-
+    // Геттер для получения имени пользователя
     const string& getUsername() const { return username; }
+    // Геттер для получения пароля пользователя
     const string& getPassword() const { return password; }
+    // Геттер для получения роли пользователя
     const string& getRole() const { return role; }
-
+    // Перегруженный оператор для получения данных из файла
     friend istream& operator>>(istream& in, User& user) {
         in >> user.username >> user.password >> user.role;
         return in;
     }
+    // Метод для вывода данных о пользователе
     void printUserInfo() const {
         cout << "Имя пользователя: " << username << endl;
         cout << "Пароль: " << password << endl;
         cout << "Роль: " << role << endl;
     }
+    void setPassword(string password) {
+        this->password = password;
+    };
+    void setRole(string role) {
+        this->role = role;
+    }
 private:
-    string username;
-    string password;
-    string role;
+    string username; //Имя пользователя
+    string password; //Пароль
+    string role; //Роль
 };
+//Класс для управления пользователями
 class UserManager {
 public:
+    // Метод для регистрации пользователя
     void registerUser(const string& username, const string& password, const string& role) {
         users.push_back(User(username, password, role));
          cout << "Пользователь зарегистрирован." <<  endl;
     }
-
+    // Метод для авторизации пользователя
     int loginUser(const string& username, const string& password, const string& role) {
 
         system("cls");
@@ -112,7 +162,7 @@ public:
         cout << "Неправильное имя пользователя или пароль." << endl;
 
     }
-
+    // Метод для сохранения информации о пользователях в файл
     void saveUsersToFile() {
          ofstream file("users.txt");
         if (file.is_open()) {
@@ -125,12 +175,12 @@ public:
              cerr << "Не удается открыть файл для записи." <<  endl;
         }
     }
-
+    // Метод для загрузки информации о пользователях из файла
     void loadUsersFromFile() {
         ifstream file("users.txt");
         if (file.is_open()) {
             User user;
-            while (file >> user) { // Здесь используется оператор >> для чтения данных
+            while (file >> user) {
                 users.push_back(user);
             }
             file.close();
@@ -140,33 +190,31 @@ public:
             return;
         }
     }
-
+    // Метод для вывода информации о всех пользователях
     void viewAllUsers() {
         for (const User& user : users) {
             user.printUserInfo();
              cout << "-------------------" <<  endl;
         }
     }
-
-    // Метод для добавления учетной записи
+    // Метод для добавления пользователя
     void addUser(const string& username, const string& password, const string& role) {
         users.push_back(User(username, password, role));
 
     }
-
-    // Метод для редактирования учетной записи по имени пользователя
+    // Метод для редактирования пользователя
     bool editUser(const string& username, const string& password, const string& role) {
         for (User& user : users) {
             if (user.getUsername() == username) {
-                deleteUser(username);
-                addUser(username, password, role);
+                // Найден пользователь, обновляем информацию
+                user.setPassword(password);
+                user.setRole(role);
                 return true;
             }
         }
         return false; // Пользователь не найден
     }
-
-    // Метод для удаления учетной записи по имени пользователя
+    // Метод для удаления пользователя
     bool deleteUser(const string& username) {
         for (auto it = users.begin(); it != users.end(); ++it) {
             if (it->getUsername() == username) {
@@ -174,28 +222,30 @@ public:
                 return true;
             }
         }
-        return false; // Пользователь не найден
+        return false; 
     }
 private:
     vector<User> users;
 };
-
+// Класс, представляющий запись о производстве
 class Production {
 public:
     int numberOfWorkbench, numberOfUnits;
     string date, nameOfProduct, responsible;
-
+    // Конструктор по умолчанию для инициализации полей
     Production()
         :date(""), numberOfWorkbench(), nameOfProduct(""), numberOfUnits(), responsible("") {}
-
+    // Конструктор с параметрами для установки значений полей
     Production(const string& date, int numberOfWorkbench, const string& nameOfProduct, int numberOfUnits, const string& responsible)
         : date(date), numberOfWorkbench(numberOfWorkbench), nameOfProduct(nameOfProduct), numberOfUnits(numberOfUnits), responsible(responsible) {}
-
+    // Метод для вывода информации о производстве
     void Display() const {
+        // Определение размеров отступов для выравнивания данных в таблице
         int sizeOfTabWorkbench = 20 - to_string(numberOfWorkbench).size();
         int sizeOfTabProduct = 25 - nameOfProduct.size();
         int sizeOfTabUnits = 20 - to_string(numberOfUnits).size();
         int sizeOfTabResponsible = 14 - responsible.size();
+        // Вывод данных о производстве в виде таблицы
         cout <<  left;
         cout <<  setw(10)<< "| " << date
                   <<setw(sizeOfTabWorkbench) << "| " << numberOfWorkbench
@@ -205,11 +255,12 @@ public:
                   << " |" <<  endl;
         cout << setfill('-') << setw(101) << "" << setfill(' ') << endl;
     }
-
+    // Статический метод для сохранения данных в файл
     static void Save(const vector<Production>& productions) {
          ofstream file("production.txt");
         if (file.is_open()) {
             for (const Production& production : productions) {
+                // Сохранение данных о производстве в файл в формате CSV
                 file << production.date << ";" << production.numberOfWorkbench << ";" << production.nameOfProduct << ";" << production.numberOfUnits << ";" << production.responsible <<  endl;
             }
             file.close();
@@ -218,16 +269,12 @@ public:
              cerr << "Не удается открыть файл для записи." <<  endl;
         }
     }
-    friend istream& operator>>( istream& in, Production& production) {
-        in >> production.date >> production.numberOfWorkbench >> production.nameOfProduct >> production.numberOfUnits >> production.responsible;
-        return in;
-    }
-
 };
+// Класс, представляющий базу данных производства
 class ProductionDatabase {
 private:
     vector<Production> productions;
-
+    // Метод для вывода заголовка таблицы
     void PrintHeader() const {
         cout <<  left;
         cout <<  setw(20) << "| Дата"
@@ -240,6 +287,10 @@ private:
     }
 
 public:
+    int returnSize() {
+        return(productions.size());
+    }
+    // Метод для загрузки данных из файла
     void LoadData(const string& filename) {
         ifstream fin(filename);
         ifstream file(filename);
@@ -265,12 +316,14 @@ public:
             return;
         }
     }
+    // Метод для редактирования записи о производстве
     bool EditProduction(int index, const Production& updatedProduction) {
         if (index >= 0 && index < productions.size()) {
             productions[index] = updatedProduction;
             return true;
         }
     }
+    // Метод для отображения выбранной записи о производстве
     void DisplayProduction(int i) {
         cout << "Выбранная запись для редактирования:" << endl;
         if (i >= 0 && i < productions.size()) {
@@ -285,6 +338,7 @@ public:
             cout << "Неверный индекс" << endl;
         }
     }
+    // Метод для отображения всех записей о производстве
     void DisplayProductions() {
         PrintHeader();
         for (const auto& s : productions) {
@@ -292,7 +346,7 @@ public:
         }
         cout << endl;
     }
-
+    // Метод для удаления записи о производстве
     void DeleteProduction(int index) {
         if (index >= 0 && index < productions.size()) {
             productions.erase(productions.begin() + index);
@@ -303,11 +357,12 @@ public:
         }
         SaveToFile();
     }
-
+    //Метод для добавления продукта
     void AddProduction(const Production& production) {
         productions.push_back(production);
         cout << "Продукт успешно добавлен." << endl;
     }
+    // Метод сортировки записей о производстве по количеству изделий
     void SortProduction(bool descending) {
         if (descending) {
             sort(productions.begin(), productions.end(), [](const Production& p1, const Production& p2) {
@@ -320,7 +375,7 @@ public:
                 });
         }
     }
-
+    // Метод для фильтрации и сортировки записей о производстве по дате
     void FilterAndSortByDate(int numberOfWorkbench, bool descending, const  string& startDate, const  string& endDate) {
          vector<Production> filteredProduction;
         auto startIt =  find_if(productions.begin(), productions.end(), [&startDate](const Production& p) {
@@ -349,21 +404,20 @@ public:
         }
          cout <<  endl;
     }
-
+    // Метод для сохранения данных о производстве в файл
     void SaveToFile() const {
         Production::Save(productions);
     }
 };
 
-
+// Класс для работы с файлами
 class DataFile {
 public:
-     string filename;
-
+     string filename; // имя файла
+    // Конструктор с параметром filename для инициализации имени файла
     DataFile(const  string& filename)
         : filename(filename) {}
-
-    // Создать файл
+    // Статический метод для создания файла с заданным именем
     static void CreateFile(const  string& filename) {
          ofstream file(filename);
         if (file.is_open()) {
@@ -371,23 +425,22 @@ public:
              cout << "Файл создан: " << filename <<  endl;
         }
         else {
-             cerr << "Невозможно создать файл: " << filename <<  endl;
+             cout << "Невозможно создать файл: " << filename <<  endl;
         }
     }
 
-    // Открыть файл
+    // Статический метод для открытия файла с заданным именем для чтения
     static  ifstream OpenFile(const  string& filename) {
          ifstream file(filename);
         if (file.is_open()) {
              cout << "Файл открыт: " << filename <<  endl;
         }
         else {
-             cerr << "Невозможно открыть файл: " << filename <<  endl;
+             cout << "Невозможно открыть файл: " << filename <<  endl;
         }
         return file;
     }
-
-    // Удалить файл
+    // Статический метод для удаления файла с заданным именем
     static void DeleteFile(const  string& filename) {
         if (remove(filename.c_str()) == 0) {
              cout << "Файл удален: " << filename <<  endl;
@@ -397,9 +450,10 @@ public:
         }
     }
 };
-
+// Главный класс, управляющий всей программой
 class Menu {
 public:
+    // Метод для отображения меню
     void menu() {
         cout << setfill('-') << setw(66) << "" << setfill(' ') << endl;
         cout << left << "Белорусская государственная академия связи\n"
@@ -422,6 +476,7 @@ public:
             choice = getUserInput();
             switch (choice) {
             case 1:
+                // Регистрация пользователя
                 system("cls");
                 cout << setfill('-') << setw(27) << "" << setfill(' ') << endl;
                 cout << "Введите имя пользователя: ";
@@ -434,6 +489,7 @@ public:
                 system("pause");
                 break;
             case 2:
+                // Авторизация пользователя
                 system("cls");
                 cout << setfill('-') << setw(30) << "" << setfill(' ') << endl;
                 cout << "Введите имя пользователя: ";
@@ -452,10 +508,12 @@ public:
                 system("pause");
                 break;
             case 3:
+                // Выход
                 system("cls");
                 exitMenu = true;
                 break;
             default:
+                //Отработка некорректного выбора
                 system("cls");
                 cout << "Некорректный выбор. Попробуйте еще раз." <<  endl;
                 break;
@@ -464,6 +522,7 @@ public:
     }
 
 private:
+    //Метод для вывода главного меню
     void displayMainMenu() {
         cout << setfill('-') << setw(18) << "" << setfill(' ') << endl;
         cout << "Выберите действие: " << endl;
@@ -475,7 +534,7 @@ private:
 
     }
 
-
+    // Метод для меню администратора
     void AdminMenu() {
         bool exitAdminMenu = false;
         while (!exitAdminMenu) {
@@ -485,18 +544,22 @@ private:
 
             switch (choice) {
             case 1:
+                // Вывод информации о пользователях
                 system("cls");
                 UserData();
                 break;
             case 2:
+                // Управление файлами
                 system("cls");
                 dataFileMenu();
                 break;
             case 3:
+                // Управление базой данных продукции производства
                 system("cls");
                 ProductionMenu();
                 break;
             case 4:
+                // Выход
                 system("cls");
                 exitAdminMenu = true;
                 break;
@@ -507,6 +570,7 @@ private:
             }
         }
     }
+    //Метод для отображения меню администратора
     void displayAdminMenu() {
         cout << setfill('-') << setw(45) << "" << setfill(' ') << endl;
         cout << "Выберите действие" << endl;
@@ -517,7 +581,7 @@ private:
         cout << setfill('-') << setw(45) << "" << setfill(' ') << endl;
     }
 
-
+    // Метод для меню управления файлами
     void dataFileMenu() {
         bool c;
         bool exitDataFileMenu = false;
@@ -529,6 +593,7 @@ private:
             choice = getUserInput();
             switch (choice) {
             case 1:
+                // Создать файл
                 c = confirmChanges();
                 if (c == true) {
                     system("cls");
@@ -545,6 +610,7 @@ private:
                 system("pause");
                 break;
             case 2:
+                // Открыть файл
                 system("cls");
                 cout << setfill('-') << setw(25) << "" << setfill(' ') << endl;
                 cout << "Введите название файла: ";
@@ -554,6 +620,7 @@ private:
                 system("pause");
                 break;
             case 3:
+                // Удалить файл
                 c = confirmChanges();
                 if (c == true) {
                     system("cls");
@@ -570,16 +637,19 @@ private:
                 system("pause");
                 break;
             case 4:
+                // Выход
                 system("cls");
                 exitDataFileMenu = true;
                 break;
             default:
+                // Некорректный выбор
                 system("cls");
                 cout << "Некорректный выбор. Попробуйте еще раз." << endl;
                 break;
             }
         }
     }
+    //Метод для вывода меню управления файлами
     void displayDataFileMenu() {
         cout << setfill('-') << setw(18) << "" << setfill(' ') << endl;
         cout << "Выберите действие:" << endl;
@@ -590,7 +660,7 @@ private:
         cout << setfill('-') << setw(18) << "" << setfill(' ') << endl;
     }
 
-
+    //Метод для меню управления пользователями
     void UserData()
     {
         UserManager userManager;
@@ -609,10 +679,12 @@ private:
 
             switch (choice) {
             case 1:
+                // Вывод всех пользователей
                 system("cls");
                 userManager.viewAllUsers();
                 break;
             case 2:
+                // Создание пользователя
                 c = confirmChanges();
                 if (c == true) {
                     system("cls");
@@ -631,16 +703,18 @@ private:
                 }
                 break;
             case 3:
+                // Изменение пользователя
                 c = confirmChanges();
                 if (c == true) {
                     system("cls");
                     cout << setfill('-') << setw(33) << "" << setfill(' ') << endl;
                     cout << "Введите имя пользователя: " << endl;
                     username = getStringInput();
-                    cout << "Введите пароль:";
+                    cout << "Введите новый пароль:" << endl;
                     password = getStringInput();
+                    cout << "Введите роль пользователя(0/1): " << endl;
                     role = getStringInput();
-                    if (userManager.editUser(username, password, role))
+                    if (userManager.editUser(username, password,role))
                     {
                         cout << "Пользователь изменен" << endl;
                         cout << setfill('-') << setw(33) << "" << setfill(' ') << endl;
@@ -650,14 +724,16 @@ private:
                         cout << "Пользователь не найден" << endl;
                         cout << setfill('-') << setw(33) << "" << setfill(' ') << endl;
                     }
-                    system("pause");
+             
                 }
                 else{
                     cout << "Откат изменений" << endl;
-                    system("pause");
                 }
+                system("pause");
+                system("cls");
                 break;
             case 4:
+                // Удаление пользователя
                 c = confirmChanges();
                 if (c == true) {
                     system("cls");
@@ -681,16 +757,19 @@ private:
                 }
                 break;
             case 5:
+                // Выход
                 system("cls");
                 exitUserChangeMenu = true;
                 break;
             default:
+                // Некорректный выбор
                 system("cls");
                 cout << "Некорректный выбор. Попробуйте еще раз." << endl;
                 break;
             }
         }
     }
+    // Метод для отображения подменю управления учетными записями пользователей
     void displayUserData() {
         cout << setfill('-') << setw(33) << "" << setfill(' ') << endl;
         cout << "Выберите действие:" << endl;
@@ -702,7 +781,7 @@ private:
         cout << setfill('-') << setw(33) << "" << setfill(' ') << endl;
     }
 
-
+    // Меню для управления продукцией
     void ProductionMenu()
     {
         string date, nameOfProduct, responsible;
@@ -721,19 +800,23 @@ private:
             int choice;
             choice = getUserInput();
 
-
             switch (choice) {
             case 1:
+                // Вывод продукции
                 system("cls");
                 Productiondatabase.DisplayProductions();
                 break;
             case 2:
                 c = confirmChanges();
+                // Добавление записи
                 if (c == true) {
                     system("cls");
                     cout << setfill('-') << setw(29) << "" << setfill(' ') << endl;
-                    cout << "Введите дату: " << endl;
-                    date = getStringInput();
+                    do{
+                        cout << "Введите дату: " << endl;
+                        cout << ">>>";
+                        cin >> date;
+                    } while (!isValidDate(date));
                     cout << "Введите номер цеха: " << endl;
                     numberOfWorkbench = getUserInput();
                     cout << "Введите название изделия: " << endl;
@@ -752,6 +835,7 @@ private:
                     cout << "Откат изменений" << endl;
                 break;
             case 3:
+                // Удаление записи
                 c = confirmChanges();
                 if (c == true) {
                     system("cls");
@@ -766,15 +850,24 @@ private:
                     cout << "Откат изменений" << endl;
                 break;
             case 4:
+                // Редактирование записи
                 c = confirmChanges();
                 if (c == true) {
                     system("cls");
                     cout << setfill('-') << setw(29) << "" << setfill(' ') << endl;
                     cout << "Введите номер для изменения" << endl;
                     i = getUserInput();
+                    if (i > Productiondatabase.returnSize()) {
+                        cout << "Неверный индекс";
+                        break;
+                    }
+                    cout << setfill('-') << setw(29) << "" << setfill(' ') << endl;
                     Productiondatabase.DisplayProduction(i);
-                    cout << "Введите новую дату: " << endl;
-                    string date = getStringInput();
+                    do {
+                        cout << "Введите новую дату: " << endl;
+                        cout << ">>> ";
+                        cin >> date;
+                    } while (!isValidDate(date));
                     cout << "Введите новый номер цеха: " << endl;
                     numberOfWorkbench = getUserInput();
                     cout << "Введите новое название изделия: " << endl;
@@ -800,16 +893,19 @@ private:
                 system("cls");
                 break;
             case 5:
+                // Выход
                 system("cls");
                 exitProductionMenu = true;
                 break;
             default:
+                // Некорректный выбор
                 system("cls");
                 cout << "Некорректный выбор. Попробуйте еще раз." << endl;
                 break;
             }
         }
     }
+    // Метод для отображения подменю работы с данными о производстве
     void displayProductionMenu() {
          cout << setfill('-') << setw(25) << "" << setfill(' ') << endl;
          cout << "Выберите действие:" <<  endl;
@@ -821,7 +917,7 @@ private:
          cout << setfill('-') << setw(25) << "" << setfill(' ') << endl;
     }
 
-
+    // Меню управления продукцией в рамках пользователя
     void UserDataProduction()
     {
         bool exitUserDataProduction = false;
@@ -837,18 +933,26 @@ private:
             {
             case 1:
                 system("cls");
+                // Вывод продукции
                 Productiondatabase.DisplayProductions();
                 break;
             case 2:
+                // Сортировка и фильтрация по дате по убыванию
                 system("cls");
                 {
                     cout << setfill('-') << setw(46) << "" << setfill(' ') << endl;
                     int numberOfWorkbench;
                     string startDate, endDate;
-                    cout << "Введите начало периода в формате ГГГГ-ММ-ДД: " << endl;
-                    startDate = getStringInput();
-                    cout << "Введите конец периода в формате ГГГГ-ММ-ДД: " << endl;
-                    endDate = getStringInput();
+                    do{
+                        cout << "Введите начало периода в формате ГГГГ-ММ-ДД: " << endl;
+                        cout << ">>>";
+                        cin >> startDate;
+                    } while (!isValidDate(startDate));
+                    do{
+                        cout << "Введите конец периода в формате ГГГГ-ММ-ДД: " << endl;
+                        cout << ">>>";
+                        cin >> endDate;
+                    } while (!isValidDate(endDate));
                     cout << "Введите номер цеха" << endl;
                     numberOfWorkbench = getUserInput();
                     cout << setfill('-') << setw(46) << "" << setfill(' ') << endl;
@@ -857,6 +961,7 @@ private:
                 }
                 break;
             case 3:
+                // Сортировка и фильтрация по дате по возрастанию
                 system("cls");
                 {
                     cout << setfill('-') << setw(46) << "" << setfill(' ') << endl;
@@ -876,35 +981,42 @@ private:
             case 4:
                 system("cls");
                 {
+                    // Выход
                     Productiondatabase.SaveToFile();
                     exitUserDataProduction = true;
                     break;
                 }
                 break;
             default:
+                // Некорректный выбор
                 system("cls");
                 cout << "Некорректный выбор. Попробуйте еще раз." << endl;
                 break;
             }
         }
     }
+    // Метод для отображения подменю данных о продукции в рамках обычного пользователя пользователя
     void displayUserDataProduction() {
-        cout << setfill('-') << setw(102) << "" << setfill(' ') << endl;
+        cout << setfill('-') << setw(127) << "" << setfill(' ') << endl;
         cout << "Выберите действие:" << endl;
-        cout << "1. Вывести информацию о продуктах" << endl;
-        cout << "2. Вывести список товаров произведенных в одном цеху за определенный промежуток времени по убыванию" << endl;
-        cout << "3. Вывести список товаров произведенных в одном цеху за определенный промежуток времени по возрастанию" << endl;
+        cout << "1. Вывести информацию о продукции." << endl;
+        cout << "2. Вывести список продукции произведенной в одном цеху за определенный промежуток времени по убыванию количества продукции." << endl;
+        cout << "3. Вывести список продукции произведенной в одном цеху за определенный промежуток времени по возрастанию количества продукции." << endl;
         cout << "4. Выход" << endl;
-        cout << setfill('-') << setw(102) << "" << setfill(' ') << endl;
+        cout << setfill('-') << setw(127) << "" << setfill(' ') << endl;
     }
 
 };
-
+// Главная функция
 int main() {
+    // Установка русского вывода в консоли
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
+    // Установка русской локали
     setlocale(LC_ALL, "rus");
+    // Инициализация главного меню
     Menu menu;
+    //Вызов главного меню
     menu.menu();
     return 0;
 }
