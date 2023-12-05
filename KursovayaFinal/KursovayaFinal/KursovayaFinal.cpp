@@ -46,12 +46,22 @@ bool confirmChanges() {
         return false;
     }
 }
-string getUserInput() {
-    string input;
-    cout << ">>> ";
+
+int getUserInput() {
+    int input;
+    cout <<  ">>> ";
     cin >> input;
     return input;
 }
+
+string getStringInput() {
+    string input;
+    cout << ">>> ";
+    cin.ignore();
+    getline(cin, input);
+    return input;
+}
+
 
 class User {
 public:
@@ -181,8 +191,6 @@ public:
     Production(const string& date, int numberOfWorkbench, const string& nameOfProduct, int numberOfUnits, const string& responsible)
         : date(date), numberOfWorkbench(numberOfWorkbench), nameOfProduct(nameOfProduct), numberOfUnits(numberOfUnits), responsible(responsible) {}
 
-
-
     void Display() const {
         int sizeOfTabWorkbench = 20 - to_string(numberOfWorkbench).size();
         int sizeOfTabProduct = 25 - nameOfProduct.size();
@@ -238,19 +246,16 @@ public:
         if (file.is_open()) {
             Production production;
             string line;
-            string date, workbenchNumber, productName, productCount, responsiblePerson;
+            string workbenchNumber, productCount;
                 while (getline(file, line)) {
                     istringstream iss(line);
-                    getline(iss, date, ';');
+                    getline(iss, production.date, ';');
                     getline(iss, workbenchNumber, ';');
-                    getline(iss, productName, ';');
+                    getline(iss, production.nameOfProduct, ';');
                     getline(iss, productCount, ';');
-                    getline(iss, responsiblePerson);
-                    production.date = date;
+                    getline(iss, production.responsible);
                     production.numberOfWorkbench = stoi(workbenchNumber);
-                    production.nameOfProduct = productName;
                     production.numberOfUnits = stoi(productCount);
-                    production.responsible = responsiblePerson;
                     productions.push_back(production);
             }
             file.close();
@@ -260,7 +265,26 @@ public:
             return;
         }
     }
-
+    bool EditProduction(int index, const Production& updatedProduction) {
+        if (index >= 0 && index < productions.size()) {
+            productions[index] = updatedProduction;
+            return true;
+        }
+    }
+    void DisplayProduction(int i) {
+        cout << "Выбранная запись для редактирования:" << endl;
+        if (i >= 0 && i < productions.size()) {
+            cout << "Дата: " << productions[i].date << endl;
+            cout << "Номер цеха: " << productions[i].numberOfWorkbench << endl;
+            cout << "Название изделия: " << productions[i].nameOfProduct << endl;
+            cout << "Количество изделий: " << productions[i].numberOfUnits << endl;
+            cout << "Ответственный: " << productions[i].responsible << endl;
+            cout << setfill('-') << setw(29) << "" << setfill(' ') << endl;
+        }
+        else {
+            cout << "Неверный индекс" << endl;
+        }
+    }
     void DisplayProductions() {
         PrintHeader();
         for (const auto& s : productions) {
@@ -377,6 +401,15 @@ public:
 class Menu {
 public:
     void menu() {
+        cout << setfill('-') << setw(66) << "" << setfill(' ') << endl;
+        cout << left << "Белорусская государственная академия связи\n"
+            << "Курсовая работа\n" << "По дисциплине\n"
+            << "ОБЪЕКТНО-ОРИЕНТИРОВАННОЕ ПРОГРАММИРОВАНИЕ\n" << "Вариант 8\n"
+            << "Разработка программы учета выпускаемой предприятием продукции\n"
+            << "Разработал студент гр.ИТ-291\n" << "Климкович З.А" << endl;
+        cout << setfill('-') << setw(66) << "" << setfill(' ') << endl;
+        system("pause");
+        system("cls");
         UserManager userManager;
         userManager.loadUsersFromFile();
         bool exitMenu = false;
@@ -386,16 +419,19 @@ public:
         while (!exitMenu) {
             displayMainMenu();
             int choice;
-            choice = stoi(getUserInput());
+            choice = getUserInput();
             switch (choice) {
             case 1:
                 system("cls");
+                cout << setfill('-') << setw(27) << "" << setfill(' ') << endl;
                 cout << "Введите имя пользователя: ";
                 cin >> username;
                 cout << "Введите пароль: ";
                 password = censorPassword();
+                cout << setfill('-') << setw(30) << "" << setfill(' ') << endl;
                 userManager.registerUser(username, password, role);
                 userManager.saveUsersToFile();
+                system("pause");
                 break;
             case 2:
                 system("cls");
@@ -413,7 +449,7 @@ public:
                 else if (userManager.loginUser(loginUsername, loginPassword, role) == 2) {
                     cout << "Неверные данные" << endl;
                 }
-
+                system("pause");
                 break;
             case 3:
                 system("cls");
@@ -445,7 +481,7 @@ private:
         while (!exitAdminMenu) {
             displayAdminMenu();
             int choice;
-            choice = stoi(getUserInput());
+            choice = getUserInput();
 
             switch (choice) {
             case 1:
@@ -490,9 +526,7 @@ private:
         while (!exitDataFileMenu)
         {
             displayDataFileMenu();
-            choice = stoi(getUserInput());
-
-
+            choice = getUserInput();
             switch (choice) {
             case 1:
                 c = confirmChanges();
@@ -508,6 +542,7 @@ private:
                     cout << "Откат изменений" << endl;
                     cout << setfill('-') << setw(25) << "" << setfill(' ') << endl;
                 }
+                system("pause");
                 break;
             case 2:
                 system("cls");
@@ -516,6 +551,7 @@ private:
                 cin >> filename;
                 DataFile::OpenFile(filename);
                 cout << setfill('-') << setw(25) << "" << setfill(' ') << endl;
+                system("pause");
                 break;
             case 3:
                 c = confirmChanges();
@@ -531,6 +567,7 @@ private:
                     cout << "Откат изменений" << endl;
                     cout << setfill('-') << setw(25) << "" << setfill(' ') << endl;
                 }
+                system("pause");
                 break;
             case 4:
                 system("cls");
@@ -567,7 +604,7 @@ private:
             bool c;
             displayUserData();
             int choice;
-            choice = stoi(getUserInput());
+            choice = getUserInput();
 
 
             switch (choice) {
@@ -580,15 +617,18 @@ private:
                 if (c == true) {
                     system("cls");
                     cout << "Введите нового пользователя,пароль,роль" << endl;
-                    username = getUserInput();
-                    password = getUserInput();
-                    role = getUserInput();
+                    username = getStringInput();
+                    password = getStringInput();
+                    role = getStringInput();
 
                     userManager.addUser(username, password, role);
                     userManager.saveUsersToFile();
+                    system("pause");
                 }
-                else
+                else{
                     cout << "Откат изменений" << endl;
+                    system("pause");
+                }
                 break;
             case 3:
                 c = confirmChanges();
@@ -596,10 +636,10 @@ private:
                     system("cls");
                     cout << setfill('-') << setw(33) << "" << setfill(' ') << endl;
                     cout << "Введите имя пользователя: " << endl;
-                    username = getUserInput();
+                    username = getStringInput();
                     cout << "Введите пароль:";
-                    password = getUserInput();
-                    role = getUserInput();
+                    password = getStringInput();
+                    role = getStringInput();
                     if (userManager.editUser(username, password, role))
                     {
                         cout << "Пользователь изменен" << endl;
@@ -610,9 +650,12 @@ private:
                         cout << "Пользователь не найден" << endl;
                         cout << setfill('-') << setw(33) << "" << setfill(' ') << endl;
                     }
+                    system("pause");
                 }
-                else
+                else{
                     cout << "Откат изменений" << endl;
+                    system("pause");
+                }
                 break;
             case 4:
                 c = confirmChanges();
@@ -676,7 +719,7 @@ private:
         while (!exitProductionMenu) {
             displayProductionMenu();
             int choice;
-            choice = stoi(getUserInput());
+            choice = getUserInput();
 
 
             switch (choice) {
@@ -690,19 +733,20 @@ private:
                     system("cls");
                     cout << setfill('-') << setw(29) << "" << setfill(' ') << endl;
                     cout << "Введите дату: " << endl;
-                    date = getUserInput();
+                    date = getStringInput();
                     cout << "Введите номер цеха: " << endl;
-                    numberOfWorkbench = stoi(getUserInput());
+                    numberOfWorkbench = getUserInput();
                     cout << "Введите название изделия: " << endl;
-                    nameOfProduct = getUserInput();
+                    nameOfProduct = getStringInput();
                     cout << "Введите кол-во изделий: " << endl;
-                    numberOfUnits = stoi(getUserInput());
+                    numberOfUnits = getUserInput();
                     cout << "Введите ФИО ответственного: " << endl;
-                    responsible = getUserInput();
+                    responsible = getStringInput();
                     cout << setfill('-') << setw(29) << "" << setfill(' ') << endl;
                     production = Production(date, numberOfWorkbench, nameOfProduct, numberOfUnits, responsible);
                     Productiondatabase.AddProduction(production);
                     Productiondatabase.SaveToFile();
+                    system("pause");
                 }
                 else
                     cout << "Откат изменений" << endl;
@@ -713,9 +757,10 @@ private:
                     system("cls");
                     cout << setfill('-') << setw(27) << "" << setfill(' ') << endl;
                     cout << "Введите номер для удаления" << endl;
-                    i = stoi(getUserInput());
+                    i = getUserInput();
                     Productiondatabase.DeleteProduction(i);
                     cout << setfill('-') << setw(27) << "" << setfill(' ') << endl;
+                    system("pause");
                 }
                 else
                     cout << "Откат изменений" << endl;
@@ -726,25 +771,33 @@ private:
                     system("cls");
                     cout << setfill('-') << setw(29) << "" << setfill(' ') << endl;
                     cout << "Введите номер для изменения" << endl;
-                    i = stoi(getUserInput());
-                    Productiondatabase.DeleteProduction(i);
-                    cout << "Введите дату: " << endl;
-                    date = getUserInput();
-                    cout << "Введите номер цеха: " << endl;
-                    numberOfWorkbench = stoi(getUserInput());
-                    cout << "Введите название изделия: " << endl;
-                    nameOfProduct = getUserInput();
-                    cout << "Введите кол-во изделий: " << endl;
-                    numberOfUnits = stoi(getUserInput());
-                    cout << "Введите ФИО ответственного: " << endl;
-                    responsible = getUserInput();
+                    i = getUserInput();
+                    Productiondatabase.DisplayProduction(i);
+                    cout << "Введите новую дату: " << endl;
+                    string date = getStringInput();
+                    cout << "Введите новый номер цеха: " << endl;
+                    numberOfWorkbench = getUserInput();
+                    cout << "Введите новое название изделия: " << endl;
+                    nameOfProduct = getStringInput();
+                    cout << "Введите новое количество изделий: " << endl;
+                    numberOfUnits = getUserInput();
+                    cout << "Введите новое ФИО ответственного: " << endl;
+                    responsible = getStringInput();
                     cout << setfill('-') << setw(29) << "" << setfill(' ') << endl;
-                    production = Production(date, numberOfWorkbench, nameOfProduct, numberOfUnits, responsible);
-                    Productiondatabase.AddProduction(production);
-                    Productiondatabase.SaveToFile();
+                    Production updatedProduction(date, numberOfWorkbench, nameOfProduct, numberOfUnits, responsible);
+                    if(Productiondatabase.EditProduction(i, updatedProduction)){
+                        Productiondatabase.SaveToFile();
+                        cout << "Запись успешно отредактированна.\n";
+                    }
+                    else {
+                        cout << "Ошибка при редактировании записи.\n";
+                    }
                 }
-                else
+                else{
                     cout << "Откат изменений" << endl;
+                }
+                system("pause");
+                system("cls");
                 break;
             case 5:
                 system("cls");
@@ -779,7 +832,7 @@ private:
         while (!exitUserDataProduction)
         {
             displayUserDataProduction();
-            choice = stoi(getUserInput());
+            choice = getUserInput();
             switch (choice)
             {
             case 1:
@@ -793,11 +846,11 @@ private:
                     int numberOfWorkbench;
                     string startDate, endDate;
                     cout << "Введите начало периода в формате ГГГГ-ММ-ДД: " << endl;
-                    startDate = getUserInput();
+                    startDate = getStringInput();
                     cout << "Введите конец периода в формате ГГГГ-ММ-ДД: " << endl;
-                    endDate = getUserInput();
+                    endDate = getStringInput();
                     cout << "Введите номер цеха" << endl;
-                    numberOfWorkbench = stoi(getUserInput());
+                    numberOfWorkbench = getUserInput();
                     cout << setfill('-') << setw(46) << "" << setfill(' ') << endl;
                     Productiondatabase.FilterAndSortByDate(numberOfWorkbench, true, startDate, endDate);
                     break;
@@ -810,11 +863,11 @@ private:
                     int numberOfWorkbench;
                     string startDate, endDate;
                     cout << "Введите начало периода в формате ГГГГ-ММ-ДД: " << endl;
-                    startDate = getUserInput();
+                    startDate = getStringInput();
                     cout << "Введите конец периода в формате ГГГГ-ММ-ДД: " << endl;
-                    endDate = getUserInput();
+                    endDate = getStringInput();
                     cout << "Введите номер цеха";
-                    numberOfWorkbench = stoi(getUserInput());
+                    numberOfWorkbench = getUserInput();
                     cout << setfill('-') << setw(46) << "" << setfill(' ') << endl;
                     Productiondatabase.FilterAndSortByDate(numberOfWorkbench, false, startDate, endDate);
                     break;
